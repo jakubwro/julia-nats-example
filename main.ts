@@ -1,6 +1,8 @@
 import { Construct } from 'constructs';
 import { App, Chart, ChartProps } from 'cdk8s';
 import { KubeDeployment, KubeService, IntOrString } from './imports/k8s';
+import * as fs from 'fs';
+import { ConfigMap } from 'cdk8s-plus-25';
 
 export class MyChart extends Chart {
     constructor(scope: Construct, id: string, props: ChartProps = {}) {
@@ -17,6 +19,16 @@ export class MyChart extends Chart {
                 selector: { "app": "nats" },
                 type: 'LoadBalancer',
                 ports: [{ name: "nats-metrics", port: 8222, targetPort: IntOrString.fromString("nats-mt-svc") }],
+            }
+        });
+
+        new KubeService(this, 'nats-exporter', {
+            metadata: { name: "nats-exporter" },
+            spec: {
+                publishNotReadyAddresses: true,
+                selector: { "app": "nats-exporter" },
+                type: 'LoadBalancer',
+                ports: [{ name: "nats-exporter", port: 7777, targetPort: IntOrString.fromNumber(7777) }],
             }
         });
 
@@ -37,10 +49,10 @@ export class MyChart extends Chart {
             spec: {
                 replicas: 1,
                 selector: {
-                    matchLabels: {"app" : "nats"},
+                    matchLabels: { "app": "nats" },
                 },
                 template: {
-                    metadata: { labels: {"app" : "nats"} },
+                    metadata: { labels: { "app": "nats" } },
                     spec: {
                         containers: [
                             {
@@ -63,7 +75,7 @@ export class MyChart extends Chart {
             spec: {
                 replicas: 1,
                 selector: {
-                    matchLabels: { "app": "nats-exporter" } 
+                    matchLabels: { "app": "nats-exporter" }
                 },
                 template: {
                     metadata: { labels: { "app": "nats-exporter" } },
@@ -81,25 +93,45 @@ export class MyChart extends Chart {
             }
         });
 
+        // volumeMounts:
+        // - name: config-volume
+        //   mountPath: /etc/config
+
         new KubeDeployment(this, 'prometheus-deployment', {
             metadata: { name: "prometheus", labels: { "app.kubernetes.io/name": "prometheus" } },
             spec: {
                 replicas: 1,
                 selector: {
-                    matchLabels: { "app": "prometheus" } 
+                    matchLabels: { "app": "prometheus" }
                 },
                 template: {
-                    metadata: { labels: { "app": "prometheus" }  },
+                    metadata: { labels: { "app": "prometheus" } },
                     spec: {
                         containers: [
                             {
                                 name: 'prometheus',
                                 image: 'bitnami/prometheus',
-                                ports: [{ containerPort: 9090 }]
+                                ports: [{ containerPort: 9090 }],
+                                volumeMounts: [
+                                    {
+                                        name: "prometheus-config-volume",
+                                        mountPath: "/etc/prometheus/prometheus.yml",
+                                        subPath: "prometheus.yml"
+                                    }
+                                ]
+                            }
+                        ],
+                        volumes: [
+                            {
+                            name: "prometheus-config-volume",
+                            configMap: {
+                                name: "prometheus-config"
+                            }
                             }
                         ]
-                    }
-                }
+                    },
+                },
+                
             }
         });
 
@@ -122,6 +154,26 @@ export class MyChart extends Chart {
                         ]
                     }
                 }
+            }
+        });
+
+        // new KubeIngress(this, 'ingress-asdf', {
+        //     spec: {
+        //         rules: [
+        //             {
+        //                 host: "asdf",
+        //                 http: {
+        //                     paths: []
+        //                 }
+        //             }
+        //         ]
+        //     }
+        // })
+
+        new ConfigMap(this, "prometheus-config", {
+            metadata: { name: "prometheus-config" },
+            data: {
+                "prometheus.yml": fs.readFileSync('prometheus.yaml', 'utf8')
             }
         });
     }

@@ -15,7 +15,6 @@ export class MyChart extends Chart {
         new KubeService(this, 'nats-service', {
             metadata: { name: "nats" },
             spec: {
-                publishNotReadyAddresses: true,
                 selector: { "app": "nats" },
                 type: 'LoadBalancer',
                 ports: [{ name: "nats-metrics", port: 8222, targetPort: IntOrString.fromString("nats-mt-svc") }],
@@ -25,7 +24,6 @@ export class MyChart extends Chart {
         new KubeService(this, 'nats-exporter', {
             metadata: { name: "nats-exporter" },
             spec: {
-                publishNotReadyAddresses: true,
                 selector: { "app": "nats-exporter" },
                 type: 'LoadBalancer',
                 ports: [{ name: "nats-exporter", port: 7777, targetPort: IntOrString.fromNumber(7777) }],
@@ -36,7 +34,6 @@ export class MyChart extends Chart {
             metadata: { name: "prometheus" },
 
             spec: {
-                publishNotReadyAddresses: true,
                 selector: { "app": "prometheus" },
                 type: 'LoadBalancer',
                 ports: [{ name: "prometheus-svc", port: 9090, targetPort: IntOrString.fromNumber(9090) }],

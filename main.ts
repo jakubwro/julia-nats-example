@@ -120,15 +120,15 @@ export class MyChart extends Chart {
                         ],
                         volumes: [
                             {
-                            name: "prometheus-config-volume",
-                            configMap: {
-                                name: "prometheus-config"
-                            }
+                                name: "prometheus-config-volume",
+                                configMap: {
+                                    name: "prometheus-config"
+                                }
                             }
                         ]
                     },
                 },
-                
+
             }
         });
 
@@ -146,7 +146,58 @@ export class MyChart extends Chart {
                             {
                                 name: 'grafana',
                                 image: 'grafana/grafana',
-                                ports: [{ containerPort: 3000 }]
+                                ports: [{ containerPort: 3000 }],
+                                volumeMounts: [
+                                    {
+                                        name: "grafana-config-volume",
+                                        mountPath: "/etc/grafana/provisioning",
+                                    },
+                                    {
+                                        name: "grafana-ini-volume",
+                                        mountPath: "/etc/grafana/grafana.ini",
+                                        subPath: "grafana.ini"
+                                    },
+                                    {
+                                        name: "grafana-dashboards-config",
+                                        mountPath: "/var/lib/grafana/dashboards",
+                                    }
+                                ]
+                            }
+                        ],
+                        volumes: [
+                            {
+                                name: "grafana-config-volume",
+                                configMap: {
+                                    name: "grafana-config",
+                                    items: [
+                                        {
+                                            key: "all.yaml",
+                                            path: "dashboards/all.yaml"
+                                        },
+                                        {
+                                            key: "prometheus.yaml",
+                                            path: "datasources/prometheus.yaml"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                name: "grafana-ini-volume",
+                                configMap: {
+                                    name: "grafana-ini"
+                                }
+                            },
+                            {
+                                name: "grafana-dashboards-config",
+                                configMap: {
+                                    name: "grafana-dashboards-config",
+                                    items: [
+                                        {
+                                            key: "grafana-nats-dash.json",
+                                            path: "grafana-nats-dash.json"
+                                        },
+                                    ]
+                                }
                             }
                         ]
                     }
@@ -171,6 +222,28 @@ export class MyChart extends Chart {
             metadata: { name: "prometheus-config" },
             data: {
                 "prometheus.yml": fs.readFileSync('prometheus.yaml', 'utf8')
+            }
+        });
+
+        new ConfigMap(this, "grafana-config", {
+            metadata: { name: "grafana-config" },
+            data: {
+                "all.yaml": fs.readFileSync('grafana/provisioning/dashboards/all.yaml', 'utf8'),
+                "prometheus.yaml": fs.readFileSync('grafana/provisioning/datasources/prometheus.yaml', 'utf8')
+            }
+        });
+
+        new ConfigMap(this, "grafana-dashboards-config", {
+            metadata: { name: "grafana-dashboards-config" },
+            data: {
+                "grafana-nats-dash.json": fs.readFileSync('grafana/dashboards/grafana-nats-dash.json', 'utf8'),
+            }
+        });
+
+        new ConfigMap(this, "grafana-ini", {
+            metadata: { name: "grafana-ini" },
+            data: {
+                "grafana.ini": fs.readFileSync('grafana/grafana.ini', 'utf8'),
             }
         });
     }

@@ -208,12 +208,12 @@ export class MyChart extends Chart {
                                     name: "grafana-dashboards-config",
                                     items: [
                                         {
-                                            key: "grafana-nats-dash.json",
-                                            path: "grafana-nats-dash.json"
+                                            key: "nats.json",
+                                            path: "nats.json"
                                         },
                                         {
-                                            key: "grafana-jetstream-dash.json",
-                                            path: "grafana-jetstream-dash.json"
+                                            key: "jetstream.json",
+                                            path: "jetstream.json"
                                         },
                                     ]
                                 }
@@ -255,8 +255,8 @@ export class MyChart extends Chart {
         new ConfigMap(this, "grafana-dashboards-config", {
             metadata: { name: "grafana-dashboards-config" },
             data: {
-                "grafana-nats-dash.json": fs.readFileSync('grafana/dashboards/grafana-nats-dash.json', 'utf8'),
-                "grafana-jetstream-dash.json": fs.readFileSync('grafana/dashboards/grafana-jetstream-dash.json', 'utf8'),
+                "nats.json": fs.readFileSync('grafana/dashboards/nats.json', 'utf8'),
+                "jetstream.json": fs.readFileSync('grafana/dashboards/jetstream.json', 'utf8'),
             }
         });
 

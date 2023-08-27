@@ -99,6 +99,13 @@ export class MyChart extends Chart {
                                 args: ["-varz", "-jsz=all", "http://nats:8222"],
                                 ports: [{ containerPort: 7777 }]
                             }
+                        ],
+                        initContainers: [
+                            {
+                                name: "wait-for-nats-metrics",
+                                image: "busybox",
+                                args: ['sh', '-c', "until nslookup nats.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for nats; sleep 2; done"]
+                            }
                         ]
                     }
                 }

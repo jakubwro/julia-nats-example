@@ -59,8 +59,23 @@ export class MyChart extends Chart {
                                     { containerPort: 4222, name: "a" },
                                     { containerPort: 6222, name: "b" },
                                     { containerPort: 8222, name: "nats-mt-svc" }
+                                ],
+                                volumeMounts: [
+                                    {
+                                        name: "nats-config-volume",
+                                        mountPath: "nats-server.conf",
+                                        subPath: "nats-server.conf"
+                                    }
                                 ]
                             }
+                        ],
+                        volumes: [
+                            {
+                                name: "nats-config-volume",
+                                configMap: {
+                                    name: "nats-config"
+                                }
+                            },
                         ]
                     }
                 }
@@ -196,6 +211,10 @@ export class MyChart extends Chart {
                                             key: "grafana-nats-dash.json",
                                             path: "grafana-nats-dash.json"
                                         },
+                                        {
+                                            key: "grafana-jetstream-dash.json",
+                                            path: "grafana-jetstream-dash.json"
+                                        },
                                     ]
                                 }
                             }
@@ -237,6 +256,7 @@ export class MyChart extends Chart {
             metadata: { name: "grafana-dashboards-config" },
             data: {
                 "grafana-nats-dash.json": fs.readFileSync('grafana/dashboards/grafana-nats-dash.json', 'utf8'),
+                "grafana-jetstream-dash.json": fs.readFileSync('grafana/dashboards/grafana-jetstream-dash.json', 'utf8'),
             }
         });
 
@@ -244,6 +264,13 @@ export class MyChart extends Chart {
             metadata: { name: "grafana-ini" },
             data: {
                 "grafana.ini": fs.readFileSync('grafana/grafana.ini', 'utf8'),
+            }
+        });
+
+        new ConfigMap(this, "nats-config", {
+            metadata: { name: "nats-config" },
+            data: {
+                "nats-server.conf": fs.readFileSync('nats/nats-server.conf', 'utf8'),
             }
         });
     }

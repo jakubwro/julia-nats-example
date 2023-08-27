@@ -8,8 +8,6 @@ export class MyChart extends Chart {
     constructor(scope: Construct, id: string, props: ChartProps = {}) {
         super(scope, id, props);
 
-        // define resources here
-
         const label = { app: 'julia-nats' };
 
         new KubeService(this, 'nats-service', {
@@ -111,10 +109,6 @@ export class MyChart extends Chart {
                 }
             }
         });
-
-        // volumeMounts:
-        // - name: config-volume
-        //   mountPath: /etc/config
 
         new KubeDeployment(this, 'prometheus-deployment', {
             metadata: { name: "prometheus", labels: { "app.kubernetes.io/name": "prometheus" } },
@@ -230,19 +224,6 @@ export class MyChart extends Chart {
                 }
             }
         });
-
-        // new KubeIngress(this, 'ingress-asdf', {
-        //     spec: {
-        //         rules: [
-        //             {
-        //                 host: "asdf",
-        //                 http: {
-        //                     paths: []
-        //                 }
-        //             }
-        //         ]
-        //     }
-        // })
 
         new ConfigMap(this, "prometheus-config", {
             metadata: { name: "prometheus-config" },

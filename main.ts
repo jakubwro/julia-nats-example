@@ -216,6 +216,10 @@ export class MyChart extends Chart {
                                             key: "jetstream.json",
                                             path: "jetstream.json"
                                         },
+                                        {
+                                            key: "prometheus-2.0.json",
+                                            path: "prometheus-2.0.json"
+                                        },
                                     ]
                                 }
                             }
@@ -245,6 +249,7 @@ export class MyChart extends Chart {
             data: {
                 "nats.json": fs.readFileSync('grafana/dashboards/nats.json', 'utf8'),
                 "jetstream.json": fs.readFileSync('grafana/dashboards/jetstream.json', 'utf8'),
+                "prometheus-2.0.json": fs.readFileSync('grafana/dashboards/prometheus-2.0.json', 'utf8'),
             }
         });
 

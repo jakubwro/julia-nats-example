@@ -15,7 +15,10 @@ export class MyChart extends Chart {
             spec: {
                 selector: { "app": "nats" },
                 type: 'LoadBalancer',
-                ports: [{ name: "nats-metrics", port: 8222, targetPort: IntOrString.fromString("nats-mt-svc") }],
+                ports: [
+                    { name: "nats-metrics", port: 8222, targetPort: IntOrString.fromString("nats-mt-svc") },
+                    { name: "nats-endpoint", port: 4222, targetPort: IntOrString.fromNumber(4222) }
+                ],
             }
         });
 
@@ -266,6 +269,53 @@ export class MyChart extends Chart {
                 "nats-server.conf": fs.readFileSync('nats/nats-server.conf', 'utf8'),
             }
         });
+
+        new KubeDeployment(this, 'julia-worker-deployment', {
+            metadata: { name: "julia-worker", labels: { "app.kubernetes.io/name": "julia-worker" } },
+            spec: {
+                replicas: 1,
+                selector: {
+                    matchLabels: { "app": "julia-worker" }
+                },
+                template: {
+                    metadata: { labels: { "app": "julia-worker" } },
+                    spec: {
+                        shareProcessNamespace: true,
+                        volumes: [
+                            {
+                                name: "queue",
+                                emptyDir: {}
+                            }
+                        ],
+
+                        containers: [
+                            {
+                                name: 'julia-worker',
+                                image: 'julia-worker:0.0.1',
+                                imagePullPolicy: "Never",
+                                volumeMounts: [{ name: "queue", mountPath: "/var/lib/queue" }],
+                            },
+                            {
+                                name: 'nats-julia-sidecar',
+                                image: 'nats-julia-sidecar:0.0.1',
+                                imagePullPolicy: "Never",
+                                volumeMounts: [{ name: "queue", mountPath: "/var/lib/queue" }],
+                            }
+
+                        ],
+                        initContainers: [
+                            {
+                                name: "make-fifo",
+                                image: "busybox",
+                                volumeMounts: [{ name: "queue", mountPath: "/var/lib/queue" }],
+                                args: ['sh', '-c', "mkfifo /var/lib/queue/requests && mkfifo /var/lib/queue/reply"]
+                            }
+                        ]
+                    }
+                }
+            }
+        })
+
     }
 }
 

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,9 +15,14 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-func main() {
-	fmt.Println("Hello, world.")
+const (
+	CONN_HOST = "localhost"
+	CONN_PORT = "3333"
+	CONN_TYPE = "tcp"
+)
 
+func handleRequest(conn net.Conn) {
+	// Make a buffer to hold incoming data.
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
 
@@ -49,22 +54,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	f, err := os.OpenFile("/var/lib/queue/requests", os.O_WRONLY, 0600)
-	fmt.Printf("WRITER << opened: %+v|%+v\n", f, err)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Starting read operation")
-	pipe, err := os.OpenFile("/var/lib/queue/reply", os.O_RDONLY, 0640)
-	if err != nil {
-		fmt.Println("Couldn't open pipe with error: ", err)
-	}
-	defer pipe.Close()
-
-	reader := bufio.NewReader(pipe)
-	fmt.Println("READER >> created")
-
 	for {
 		msg, err := cons.Next()
 
@@ -74,15 +63,15 @@ func main() {
 		}
 
 		fmt.Println(string(msg.Data()))
-		_, err = f.WriteString(fmt.Sprint(string(msg.Data()), "\n"))
+		_, err = conn.Write([]byte(fmt.Sprint(string(msg.Data()), "\n")))
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(0)
 		}
-		msg.Ack()
 
 		for {
-			line, err := reader.ReadString('\n')
+			buf := make([]byte, 1024)
+			_, err = conn.Read(buf)
 			if err != nil {
 				if err == io.EOF {
 					time.Sleep(1 * time.Second)
@@ -91,31 +80,37 @@ func main() {
 					os.Exit(0)
 				}
 			} else {
-				fmt.Println(line)
+				fmt.Println(string(buf))
+				msg.Ack()
 				break
 			}
 		}
 	}
+	conn.Close()
+}
 
-	// cc, err := cons.Consume(func(msg jetstream.Msg) {
-	// 	fmt.Println(string(msg.Data()))
-	// 	_, err = f.WriteString(fmt.Sprint(string(msg.Data()), "\n"))
-	// 	msg.Ack()
-	// 	line, err := reader.ReadBytes('\n')
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		os.Exit(0)
-	// 	}
-	// 	nline := string(line)
-	// 	fmt.Println(nline)
+func main() {
+	fmt.Println("Hello, world.")
 
-	// }, jetstream.ConsumeErrHandler(func(consumeCtx jetstream.ConsumeContext, err error) {
-	// 	fmt.Println(err)
-	// }))
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer cc.Stop()
+	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	if err != nil {
+		fmt.Println("Error listening:", err.Error())
+		os.Exit(1)
+	}
+
+	defer l.Close()
+	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
+
+	for {
+		// Listen for an incoming connection.
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting: ", err.Error())
+			os.Exit(1)
+		}
+		// Handle connections in a new goroutine.
+		go handleRequest(conn)
+	}
 
 	fmt.Println("Waiting for SIGINT.")
 

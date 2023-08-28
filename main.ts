@@ -281,35 +281,18 @@ export class MyChart extends Chart {
                     metadata: { labels: { "app": "julia-worker" } },
                     spec: {
                         shareProcessNamespace: true,
-                        volumes: [
-                            {
-                                name: "queue",
-                                emptyDir: {}
-                            }
-                        ],
-
                         containers: [
                             {
                                 name: 'julia-worker',
                                 image: 'julia-worker:0.0.1',
                                 imagePullPolicy: "Never",
-                                volumeMounts: [{ name: "queue", mountPath: "/var/lib/queue" }],
                             },
                             {
                                 name: 'nats-julia-sidecar',
                                 image: 'nats-julia-sidecar:0.0.1',
                                 imagePullPolicy: "Never",
-                                volumeMounts: [{ name: "queue", mountPath: "/var/lib/queue" }],
                             }
 
-                        ],
-                        initContainers: [
-                            {
-                                name: "make-fifo",
-                                image: "busybox",
-                                volumeMounts: [{ name: "queue", mountPath: "/var/lib/queue" }],
-                                args: ['sh', '-c', "mkfifo /var/lib/queue/requests && mkfifo /var/lib/queue/reply"]
-                            }
                         ]
                     }
                 }

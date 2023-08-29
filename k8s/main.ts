@@ -281,18 +281,44 @@ export class MyChart extends Chart {
                     metadata: { labels: { "app": "julia-worker" } },
                     spec: {
                         shareProcessNamespace: true,
+                        // TODO: handle SIGINT to julia process instad of default SIGTERM, probably with custom operator
+                        volumes: [
+                            {
+                                name: "liveness-probe-volume",
+                                emptyDir: {}
+                            }
+                        ],
                         containers: [
                             {
                                 name: 'julia-worker',
                                 image: 'julia-worker:0.0.1',
                                 imagePullPolicy: "Never",
+                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
+                                livenessProbe: {
+                                    exec: {
+                                      command: [
+                                        "cat",
+                                        "/tmp/liveness/healthy"
+                                      ]
+                                    },
+                                    initialDelaySeconds: 5,
+                                    periodSeconds: 5
+                                  }
                             },
                             {
                                 name: 'nats-julia-sidecar',
                                 image: 'nats-julia-sidecar:0.0.1',
                                 imagePullPolicy: "Never",
+                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
                             }
-
+                        ],
+                        initContainers: [
+                            {
+                                name: "init-liveness-check",
+                                image: "busybox",
+                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
+                                args: ['sh', '-c', "touch /tmp/liveness/healthy"]
+                            }
                         ]
                     }
                 }

@@ -82,6 +82,31 @@ func handleRequest(conn net.Conn) {
 			} else {
 				fmt.Println(string(buf))
 				msg.Ack()
+
+				// asdf, err := nc.JetStream()
+				// if err != nil {
+				// 	fmt.Println(err)
+				// 	fmt.Println("err 1")
+
+				// }
+				// fmt.Println("1")
+				// kv := asdf.KeyValueStores()
+
+				// fmt.Println("2")
+				// fmt.Println("putting key")
+				// fmt.Println(kv)
+				// for x := range kv {
+				// 	fmt.Println(x)
+				// }
+				// kvs, err := asdf.KeyValue("responses")
+				// if err != nil {
+				// 	fmt.Println(err)
+				// }
+				// fmt.Println(kvs)
+
+				// _, err = kvs.Put("question.answer", []byte("blue"))
+				// fmt.Println("put")
+
 				break
 			}
 		}

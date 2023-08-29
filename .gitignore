@@ -1,6 +1,6 @@
-k8s/*.d.ts
-k8s/*.js
-k8s/!jest.config.js
+*.d.ts
+*.js
+!jest.config.js
 k8s/node_modules
 k8s/dist/
 nats-julia-sidecar/nats-julia-sidecar

@@ -235,7 +235,7 @@ export class MyChart extends Chart {
         new ConfigMap(this, "prometheus-config", {
             metadata: { name: "prometheus-config" },
             data: {
-                "prometheus.yml": fs.readFileSync('prometheus.yaml', 'utf8')
+                "prometheus.yml": fs.readFileSync('prometheus/prometheus.yaml', 'utf8')
             }
         });
 
@@ -282,6 +282,10 @@ export class MyChart extends Chart {
                     spec: {
                         shareProcessNamespace: true,
                         // TODO: handle SIGINT to julia process instad of default SIGTERM, probably with custom operator
+                        // https://docs.julialang.org/en/v1/manual/faq/#catch-ctrl-c
+                        // https://docs.julialang.org/en/v1/base/base/#Base.atexit
+                        // https://docs.julialang.org/en/v1/base/base/#Core.InterruptException
+                        // https://docs.julialang.org/en/v1/base/c/#Base.exit_on_sigint
                         volumes: [
                             {
                                 name: "liveness-probe-volume",

@@ -1,12 +1,15 @@
-FROM golang:1.21
+FROM golang:1.21 as builder
 
 WORKDIR /usr/src/app
 
-# pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
-RUN go build -v -o /usr/local/bin/app ./...
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./nats-julia-sidecar
 
-CMD ["app"]
+FROM alpine:3.17
+RUN ldd; exit 0
+COPY --from=builder /usr/src/app/nats-julia-sidecar /
+
+CMD ["/nats-julia-sidecar"]

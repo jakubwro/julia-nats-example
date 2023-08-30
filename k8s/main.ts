@@ -286,6 +286,10 @@ export class MyChart extends Chart {
                         // https://docs.julialang.org/en/v1/base/base/#Base.atexit
                         // https://docs.julialang.org/en/v1/base/base/#Core.InterruptException
                         // https://docs.julialang.org/en/v1/base/c/#Base.exit_on_sigint
+                        // https://github.com/kubernetes/kubernetes/issues/24957
+                        // https://github.com/kubernetes/enhancements/issues/1977
+                        // https://github.com/kubernetes/enhancements/issues/1977
+                        // https://github.com/stakater/Reloader
                         volumes: [
                             {
                                 name: "liveness-probe-volume",

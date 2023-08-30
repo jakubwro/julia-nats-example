@@ -39,6 +39,8 @@ func findJuliaProcessPid() (pid int) {
 
 func handleRequest(conn net.Conn) {
 	defer conn.Close()
+
+	pid := findJuliaProcessPid()
 	// Make a buffer to hold incoming data.
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
@@ -86,7 +88,6 @@ func handleRequest(conn net.Conn) {
 			os.Exit(0)
 		}
 
-		pid := findJuliaProcessPid()
 		fmt.Println("Julia PID is ", pid)
 		start := time.Now()
 		for {

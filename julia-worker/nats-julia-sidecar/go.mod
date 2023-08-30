@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/klauspost/compress v1.16.5 // indirect
+	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/nats-io/nats.go v1.28.0 // indirect
 	github.com/nats-io/nkeys v0.4.4 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect

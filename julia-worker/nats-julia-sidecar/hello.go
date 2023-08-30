@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mitchellh/go-ps"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -21,7 +22,23 @@ const (
 	CONN_TYPE = "tcp"
 )
 
+func findJuliaProcessPid() (pid int) {
+	procs, err := ps.Processes()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, proc := range procs {
+		if proc.Executable() == "julia" {
+			return proc.Pid()
+		}
+	}
+	fmt.Println("Cannot find julia process.")
+	return -1
+}
+
 func handleRequest(conn net.Conn) {
+	defer conn.Close()
 	// Make a buffer to hold incoming data.
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
@@ -69,15 +86,33 @@ func handleRequest(conn net.Conn) {
 			os.Exit(0)
 		}
 
+		pid := findJuliaProcessPid()
+		fmt.Println("Julia PID is ", pid)
+		start := time.Now()
 		for {
+			if findJuliaProcessPid() != pid {
+				fmt.Println("Julia seems to be crashed, closing connection")
+				msg.Nak()
+				return
+			}
+			if time.Since(start) > 5*time.Second {
+				fmt.Println("Timeout for job")
+				if pid > 0 {
+					syscall.Kill(pid, syscall.SIGINT)
+					fmt.Println("SIGINT send to julia")
+				}
+				msg.Nak()
+				return
+			}
 			buf := make([]byte, 1024)
+			conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 			_, err = conn.Read(buf)
 			if err != nil {
 				if err == io.EOF {
 					time.Sleep(1 * time.Second)
 				} else {
-					fmt.Println(err)
-					os.Exit(0)
+					// fmt.Println(err)
+					// os.Exit(0)
 				}
 			} else {
 				fmt.Println(string(buf))

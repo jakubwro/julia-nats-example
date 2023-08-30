@@ -5,4 +5,4 @@ COPY . .
 
 RUN julia --project -e "using Pkg; Pkg.instantiate();"
 
-CMD ["julia", "--project", "-e", "using JuliaWorkerExample; do_stuff();"]
+CMD ["julia", "--project", "-e", "using JuliaWorkerExample; mainloop(do_stuff);"]

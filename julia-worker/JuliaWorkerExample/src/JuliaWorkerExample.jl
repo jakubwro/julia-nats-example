@@ -2,9 +2,23 @@ module JuliaWorkerExample
 
 using Sockets
 
-export do_stuff
+export mainloop, do_stuff
 
-function do_stuff()
+function do_stuff(data)
+    random = rand()
+    # if random > 0.99
+    #     @warn "Simulating segfault."
+    #     exit(1)
+    # end
+    sleep(7 * random)
+    # if random < 0.01
+    #     @warn "Simulating segfault."
+    #     exit(1)
+    # end
+    "Processing finished after $random s."
+end
+
+function mainloop(f)
     Base.exit_on_sigint(false)
     @info "Reading requests."
 
@@ -19,18 +33,11 @@ function do_stuff()
             s = retry(connect; delays=ExponentialBackOff(10, 0.1, 1, 2, 0))(3333)
             while true
                 @info "Reading line."
-                @info readline(s)
-                random = rand()
-                # if random > 0.99
-                #     @warn "Simulating segfault."
-                #     exit(1)
-                # end
-                sleep(7 * random)
-                # if random < 0.01
-                #     @warn "Simulating segfault."
-                #     exit(1)
-                # end
-                write(s, "Processing finished after $random s\n")
+                data = readline(s)
+                @info data
+                result = f(data)
+                
+                write(s, "$result\n")
                 flush(s)
                 touch("/tmp/liveness/done")
             end

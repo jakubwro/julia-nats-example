@@ -47,7 +47,7 @@ func handleRequest(conn net.Conn) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	defer nc.Close()
 	js, err := jetstream.New(nc)
 	if err != nil {
 		log.Fatal(err)

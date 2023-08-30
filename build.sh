@@ -1,6 +1,8 @@
 cd julia-worker/nats-julia-sidecar &&
-docker build . -t nats-julia-sidecar:0.0.1 &&
+docker build . -t ghcr.io/jakubwro/nats-julia-sidecar:0.0.1 &&
 cd ../JuliaWorkerExample &&
-docker build . -t julia-worker:0.0.1 &&
-kind load docker-image nats-julia-sidecar:0.0.1 julia-worker:0.0.1
+docker build . -t ghcr.io/jakubwro/julia-worker:0.0.1 &&
+docker push ghcr.io/jakubwro/nats-julia-sidecar:0.0.1 &&
+docker push ghcr.io/jakubwro/julia-worker:0.0.1
+
 

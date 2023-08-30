@@ -295,15 +295,16 @@ export class MyChart extends Chart {
                         containers: [
                             {
                                 name: 'julia-worker',
-                                image: 'julia-worker:0.0.1',
-                                imagePullPolicy: "Never",
+                                image: 'ghcr.io/jakubwro/julia-worker:0.0.1',
+                                imagePullPolicy: "Always",
                                 volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
                                 livenessProbe: {
                                     exec: {
                                       command: [
                                         "cat",
-                                        "/tmp/liveness/healthy"
-                                      ]
+                                        "/tmp/liveness/healthy",
+                                      ],
+                                    //   command: ['sh', '-c',  "[ $(stat -c %Y  /tmp/liveness/done) -lt $(($(stat -c %Y  /tmp/liveness/start)+10)) ]"]
                                     },
                                     initialDelaySeconds: 5,
                                     periodSeconds: 5
@@ -311,8 +312,8 @@ export class MyChart extends Chart {
                             },
                             {
                                 name: 'nats-julia-sidecar',
-                                image: 'nats-julia-sidecar:0.0.1',
-                                imagePullPolicy: "Never",
+                                image: 'ghcr.io/jakubwro/nats-julia-sidecar:0.0.1',
+                                imagePullPolicy: "Always",
                                 volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
                             }
                         ],

@@ -13,6 +13,7 @@ function do_stuff()
             @warn "Recovering after liveness probe failure."
             touch("/tmp/liveness/healthy")
         end
+        touch("/tmp/liveness/start")
         @warn "Connecting to sidecar."
         s = connect(3333)
         try
@@ -31,6 +32,7 @@ function do_stuff()
                 # end
                 write(s, "Processing finished after $random s\n")
                 flush(s)
+                touch("/tmp/liveness/done")
             end
 
         catch e

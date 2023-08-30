@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
-	"os/signal"
 	"syscall"
 	"time"
 
@@ -48,11 +46,13 @@ func handleRequest(conn net.Conn) {
 	nc, err := nats.Connect("nats://nats:4222")
 	if err != nil {
 		log.Fatal(err)
+		os.Exit(1)
 	}
 	defer nc.Close()
 	js, err := jetstream.New(nc)
 	if err != nil {
 		log.Fatal(err)
+		os.Exit(1)
 	}
 
 	s, err := js.CreateStream(ctx, jetstream.StreamConfig{
@@ -61,6 +61,7 @@ func handleRequest(conn net.Conn) {
 	})
 	if err != nil {
 		log.Fatal(err)
+		os.Exit(1)
 	}
 
 	fmt.Println("Stream created.")
@@ -71,83 +72,80 @@ func handleRequest(conn net.Conn) {
 	})
 	if err != nil {
 		log.Fatal(err)
+		os.Exit(1)
 	}
 
 	for {
 		msg, err := cons.Next()
-
 		if err != nil {
-			fmt.Println(err)
-			continue
+			if err == nats.ErrTimeout {
+				continue
+			} else {
+				log.Fatal(err)
+				os.Exit(1)
+			}
 		}
 
 		fmt.Println(string(msg.Data()))
 		_, err = conn.Write([]byte(fmt.Sprint(string(msg.Data()), "\n")))
 		if err != nil {
+			log.Println(err)
 			fmt.Println(err)
-			os.Exit(0)
+			msg.Nak()
+			return
 		}
 
-		fmt.Println("Julia PID is ", pid)
-		start := time.Now()
-		for {
-			if findJuliaProcessPid() != pid {
-				fmt.Println("Julia seems to be crashed, closing connection")
-				msg.Nak()
-				return
-			}
-			if time.Since(start) > 5*time.Second {
-				fmt.Println("Timeout for job")
+		if findJuliaProcessPid() != pid {
+			fmt.Println("Julia seems to be crashed, closing connection")
+			msg.Nak()
+			return
+		}
+
+		buf := make([]byte, 1024)
+		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+		_, err = conn.Read(buf)
+		if err != nil {
+			if os.IsTimeout(err) {
+				fmt.Println("Timeout.")
 				if pid > 0 {
 					syscall.Kill(pid, syscall.SIGINT)
-					fmt.Println("SIGINT send to julia")
+					log.Println("SIGINT send to julia due to timeout.")
 				}
 				msg.Nak()
 				return
-			}
-			buf := make([]byte, 1024)
-			conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
-			_, err = conn.Read(buf)
-			if err != nil {
-				if err == io.EOF {
-					time.Sleep(1 * time.Second)
-				} else {
-					// fmt.Println(err)
-					// os.Exit(0)
-				}
 			} else {
-				fmt.Println(string(buf))
-				msg.Ack()
-
-				// asdf, err := nc.JetStream()
-				// if err != nil {
-				// 	fmt.Println(err)
-				// 	fmt.Println("err 1")
-
-				// }
-				// fmt.Println("1")
-				// kv := asdf.KeyValueStores()
-
-				// fmt.Println("2")
-				// fmt.Println("putting key")
-				// fmt.Println(kv)
-				// for x := range kv {
-				// 	fmt.Println(x)
-				// }
-				// kvs, err := asdf.KeyValue("responses")
-				// if err != nil {
-				// 	fmt.Println(err)
-				// }
-				// fmt.Println(kvs)
-
-				// _, err = kvs.Put("question.answer", []byte("blue"))
-				// fmt.Println("put")
-
-				break
+				log.Println(err)
+				msg.Nak()
+				return
 			}
+		} else {
+			fmt.Println(string(buf))
+			msg.Ack()
 		}
+		// asdf, err := nc.JetStream()
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	fmt.Println("err 1")
+
+		// }
+		// fmt.Println("1")
+		// kv := asdf.KeyValueStores()
+
+		// fmt.Println("2")
+		// fmt.Println("putting key")
+		// fmt.Println(kv)
+		// for x := range kv {
+		// 	fmt.Println(x)
+		// }
+		// kvs, err := asdf.KeyValue("responses")
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
+		// fmt.Println(kvs)
+
+		// _, err = kvs.Put("question.answer", []byte("blue"))
+		// fmt.Println("put")
 	}
-	conn.Close()
 }
 
 func main() {
@@ -163,19 +161,11 @@ func main() {
 	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
 
 	for {
-		// Listen for an incoming connection.
 		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		// Handle connections in a new goroutine.
 		go handleRequest(conn)
 	}
-
-	fmt.Println("Waiting for SIGINT.")
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	<-sig
 }

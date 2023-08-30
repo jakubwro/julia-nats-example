@@ -15,8 +15,8 @@ function do_stuff()
         end
         touch("/tmp/liveness/start")
         @warn "Connecting to sidecar."
-        s = connect(3333)
         try
+            s = retry(connect; delays=ExponentialBackOff(10, 0.1, 1, 2, 0))(3333)
             while true
                 @info "Reading line."
                 @info readline(s)

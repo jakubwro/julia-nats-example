@@ -21,6 +21,10 @@ const (
 	CONN_TYPE = "tcp"
 )
 
+const (
+	WORKER_TIMEOUT = 5 * time.Second
+)
+
 func findJuliaProcessPid() (pid int) {
 	procs, err := ps.Processes()
 	if err != nil {
@@ -39,8 +43,9 @@ func findJuliaProcessPid() (pid int) {
 func handleRequest(conn net.Conn) {
 	defer conn.Close()
 
+	log.Println("Handling connection ", conn.LocalAddr())
+
 	pid := findJuliaProcessPid()
-	// Make a buffer to hold incoming data.
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
 
@@ -103,7 +108,7 @@ func handleRequest(conn net.Conn) {
 		}
 
 		buf := make([]byte, 1024)
-		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+		conn.SetReadDeadline(time.Now().Add(WORKER_TIMEOUT))
 		nread, err := conn.Read(buf)
 		if err != nil {
 			if os.IsTimeout(err) {
@@ -166,21 +171,21 @@ func handleRequest(conn net.Conn) {
 }
 
 func main() {
-	fmt.Println("Hello, world.")
+	log.Println("Starting.")
 
 	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
-		fmt.Println("Error listening:", err.Error())
+		log.Println("Error listening:", err.Error())
 		os.Exit(1)
 	}
 
 	defer l.Close()
-	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
+	log.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
+			log.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
 		go handleRequest(conn)

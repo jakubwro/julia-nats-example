@@ -290,6 +290,7 @@ export class MyChart extends Chart {
                         // https://github.com/kubernetes/enhancements/issues/1977
                         // https://github.com/kubernetes/enhancements/issues/1977
                         // https://github.com/stakater/Reloader
+                        // https://stackoverflow.com/questions/49172671/multiple-liveness-probes-in-kuberenetes
                         volumes: [
                             {
                                 name: "liveness-probe-volume",

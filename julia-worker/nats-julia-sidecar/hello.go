@@ -40,7 +40,7 @@ func findJuliaProcessPid() (pid int) {
 	return -1
 }
 
-func handleRequest(conn net.Conn) {
+func handleRequest(conn net.Conn, js jetstream.JetStream) {
 	defer conn.Close()
 
 	log.Println("Handling connection ", conn.LocalAddr())
@@ -48,18 +48,6 @@ func handleRequest(conn net.Conn) {
 	pid := findJuliaProcessPid()
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
-
-	nc, err := nats.Connect("nats://nats:4222")
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-	defer nc.Close()
-	js, err := jetstream.New(nc)
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
 
 	s, err := js.CreateStream(ctx, jetstream.StreamConfig{
 		Name:     "TEST_STREAM",
@@ -173,6 +161,20 @@ func handleRequest(conn net.Conn) {
 func main() {
 	log.Println("Starting.")
 
+	nc, err := nats.Connect("nats://nats:4222")
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+	log.Println("Connected to nats://nats:4222.")
+	defer nc.Close()
+	js, err := jetstream.New(nc)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+	log.Println("JetStream created.")
+
 	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
 		log.Println("Error listening:", err.Error())
@@ -188,6 +190,6 @@ func main() {
 			log.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		go handleRequest(conn)
+		go handleRequest(conn, js)
 	}
 }

@@ -35,17 +35,23 @@ function mainloop(f)
             while true
                 @info "Reading line."
                 data = readline(s)
+                @show data
+                @show isopen(s)
+                !isopen(s) && error("Connection closed.")
+                isempty(data) && error("Empty message.")
                 data = String(base64decode(data))
                 @info data
                 data = "result for $data"
                 result = f(data)
                 @info result
                 result = base64encode(result)
+                @show result
+                @show isopen(s)
+                !isopen(s) && error("Connection closed, mesage processed.")
                 write(s, "$result\n")
                 flush(s)
                 touch("/tmp/liveness/done")
             end
-
         catch e
             @error e
         end

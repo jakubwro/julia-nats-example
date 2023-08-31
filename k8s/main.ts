@@ -280,7 +280,7 @@ export class MyChart extends Chart {
                 template: {
                     metadata: { labels: { "app": "julia-worker" } },
                     spec: {
-                        shareProcessNamespace: true,
+                        // shareProcessNamespace: true,
                         // TODO: handle SIGINT to julia process instad of default SIGTERM, probably with custom operator
                         // https://docs.julialang.org/en/v1/manual/faq/#catch-ctrl-c
                         // https://docs.julialang.org/en/v1/base/base/#Base.atexit
@@ -291,43 +291,31 @@ export class MyChart extends Chart {
                         // https://github.com/kubernetes/enhancements/issues/1977
                         // https://github.com/stakater/Reloader
                         // https://stackoverflow.com/questions/49172671/multiple-liveness-probes-in-kuberenetes
-                        volumes: [
-                            {
-                                name: "liveness-probe-volume",
-                                emptyDir: {}
-                            }
-                        ],
                         containers: [
                             {
                                 name: 'julia-worker',
                                 image: 'ghcr.io/jakubwro/julia-worker:0.0.1',
                                 imagePullPolicy: "Always",
-                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
                                 livenessProbe: {
                                     exec: {
-                                      command: [
-                                        "cat",
-                                        "/tmp/liveness/healthy",
-                                      ],
+                                    //   command: [
+                                    //     "cat",
+                                    //     "/tmp/liveness/healthy",
+                                    //   ],
                                     //   command: ['sh', '-c',  "[ $(stat -c %Y  /tmp/liveness/done) -lt $(($(stat -c %Y  /tmp/liveness/start)+10)) ]"]
+                                    command: [
+                                        "bash",
+                                        "/usr/src/app/liveness.sh"
+                                    ]
                                     },
                                     initialDelaySeconds: 5,
-                                    periodSeconds: 5
+                                    periodSeconds: 1
                                   }
                             },
                             {
                                 name: 'nats-julia-sidecar',
                                 image: 'ghcr.io/jakubwro/nats-julia-sidecar:0.0.1',
                                 imagePullPolicy: "Always",
-                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
-                            }
-                        ],
-                        initContainers: [
-                            {
-                                name: "init-liveness-check",
-                                image: "busybox",
-                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
-                                args: ['sh', '-c', "touch /tmp/liveness/healthy"]
                             }
                         ]
                     }

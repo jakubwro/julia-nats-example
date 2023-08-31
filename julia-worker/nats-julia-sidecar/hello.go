@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/mitchellh/go-ps"
@@ -22,7 +21,7 @@ const (
 )
 
 const (
-	WORKER_TIMEOUT = 5 * time.Second
+	WORKER_TIMEOUT = 30 * time.Second
 )
 
 func findJuliaProcessPid() (pid int) {
@@ -101,10 +100,10 @@ func handleRequest(conn net.Conn, js jetstream.JetStream) {
 		if err != nil {
 			if os.IsTimeout(err) {
 				fmt.Println("Timeout.")
-				if pid > 0 {
-					syscall.Kill(pid, syscall.SIGINT)
-					log.Println("SIGINT send to julia due to timeout.")
-				}
+				// if pid > 0 {
+				// 	syscall.Kill(pid, syscall.SIGINT)
+				// 	log.Println("SIGINT send to julia due to timeout.")
+				// }
 				msg.Nak()
 				return
 			} else {

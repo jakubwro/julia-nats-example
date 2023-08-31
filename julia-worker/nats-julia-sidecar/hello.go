@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net"
@@ -87,7 +88,7 @@ func handleRequest(conn net.Conn) {
 		}
 
 		fmt.Println(string(msg.Data()))
-		_, err = conn.Write([]byte(fmt.Sprint(string(msg.Data()), "\n")))
+		_, err = conn.Write([]byte(fmt.Sprint(base64.StdEncoding.EncodeToString(msg.Data()), "\n")))
 		if err != nil {
 			log.Println(err)
 			fmt.Println(err)
@@ -103,7 +104,7 @@ func handleRequest(conn net.Conn) {
 
 		buf := make([]byte, 1024)
 		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-		_, err = conn.Read(buf)
+		nread, err := conn.Read(buf)
 		if err != nil {
 			if os.IsTimeout(err) {
 				fmt.Println("Timeout.")
@@ -119,7 +120,23 @@ func handleRequest(conn net.Conn) {
 				return
 			}
 		} else {
-			fmt.Println(string(buf))
+			if nread < 2 {
+				log.Fatalln("Expecting more than two bytes in the buffer.")
+				return
+			}
+			if buf[nread-1] != '\n' {
+				log.Fatalln("Expected newline at end of the buffer.")
+				return
+			}
+			var base64bytes []byte = buf[0:(nread - 1)]
+			n, err := base64.StdEncoding.Decode(buf, base64bytes)
+
+			if err != nil {
+				log.Fatalln(err)
+				return
+			}
+
+			fmt.Println(string(buf[0:n]))
 			msg.Ack()
 		}
 		// asdf, err := nc.JetStream()

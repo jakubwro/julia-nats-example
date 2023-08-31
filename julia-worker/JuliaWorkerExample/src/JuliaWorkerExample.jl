@@ -1,5 +1,6 @@
 module JuliaWorkerExample
 
+using Base64
 using Sockets
 
 export mainloop, do_stuff
@@ -15,7 +16,7 @@ function do_stuff(data)
     #     @warn "Simulating segfault."
     #     exit(1)
     # end
-    "Processing finished after $random s."
+    "Processing finished after $(7 * random) s."
 end
 
 function mainloop(f)
@@ -34,9 +35,12 @@ function mainloop(f)
             while true
                 @info "Reading line."
                 data = readline(s)
+                data = String(base64decode(data))
                 @info data
+                data = "result for $data"
                 result = f(data)
-                
+                @info result
+                result = base64encode(result)
                 write(s, "$result\n")
                 flush(s)
                 touch("/tmp/liveness/done")

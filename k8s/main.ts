@@ -291,43 +291,26 @@ export class MyChart extends Chart {
                         // https://github.com/kubernetes/enhancements/issues/1977
                         // https://github.com/stakater/Reloader
                         // https://stackoverflow.com/questions/49172671/multiple-liveness-probes-in-kuberenetes
-                        volumes: [
-                            {
-                                name: "liveness-probe-volume",
-                                emptyDir: {}
-                            }
-                        ],
                         containers: [
                             {
                                 name: 'julia-worker',
                                 image: 'ghcr.io/jakubwro/julia-worker:0.0.1',
                                 imagePullPolicy: "Always",
-                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
                                 livenessProbe: {
                                     exec: {
                                       command: [
-                                        "cat",
-                                        "/tmp/liveness/healthy",
+                                        "bash",
+                                        "/usr/src/app/liveness.sh",
                                       ],
-                                    //   command: ['sh', '-c',  "[ $(stat -c %Y  /tmp/liveness/done) -lt $(($(stat -c %Y  /tmp/liveness/start)+10)) ]"]
                                     },
                                     initialDelaySeconds: 5,
-                                    periodSeconds: 5
+                                    periodSeconds: 1
                                   }
                             },
                             {
                                 name: 'nats-julia-sidecar',
                                 image: 'ghcr.io/jakubwro/nats-julia-sidecar:0.0.1',
                                 imagePullPolicy: "Always",
-                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
-                            }
-                        ],
-                        initContainers: [
-                            {
-                                name: "init-liveness-check",
-                                image: "busybox",
-                                volumeMounts: [{ name: "liveness-probe-volume", mountPath: "/tmp/liveness" }],
-                                args: ['sh', '-c', "touch /tmp/liveness/healthy"]
                             }
                         ]
                     }

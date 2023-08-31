@@ -21,16 +21,13 @@ end
 
 function mainloop(f)
     Base.exit_on_sigint(false)
+    mkdir("/tmp/liveness")
     @info "Reading requests."
 
     while true
-        if !isfile("/tmp/liveness/healthy")
-            @warn "Recovering after liveness probe failure."
-            touch("/tmp/liveness/healthy")
-        end
-        touch("/tmp/liveness/start")
         @warn "Connecting to sidecar."
         try
+            isfile("/tmp/liveness/working") && rm("/tmp/liveness/working")
             s = retry(connect; delays=ExponentialBackOff(10, 0.1, 1, 2, 0))(3333)
             while true
                 @info "Reading line."
@@ -39,10 +36,12 @@ function mainloop(f)
                 @show isopen(s)
                 !isopen(s) && error("Connection closed.")
                 isempty(data) && error("Empty message.")
+                touch("/tmp/liveness/working")
                 data = String(base64decode(data))
                 @info data
                 data = "result for $data"
                 result = f(data)
+                rm("/tmp/liveness/working")
                 @info result
                 result = base64encode(result)
                 @show result
@@ -50,7 +49,6 @@ function mainloop(f)
                 !isopen(s) && error("Connection closed, mesage processed.")
                 write(s, "$result\n")
                 flush(s)
-                touch("/tmp/liveness/done")
             end
         catch e
             @error e

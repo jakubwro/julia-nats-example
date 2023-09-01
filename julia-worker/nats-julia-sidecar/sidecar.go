@@ -103,6 +103,18 @@ func handleRequest(conn net.Conn, js jetstream.JetStream) {
 				fmt.Println("Timeout.")
 				if pid > 0 {
 					syscall.Kill(pid, syscall.SIGINT)
+					time.Sleep(10 * time.Millisecond)
+					syscall.Kill(pid, syscall.SIGINT)
+					time.Sleep(10 * time.Millisecond)
+					syscall.Kill(pid, syscall.SIGINT)
+					time.Sleep(10 * time.Millisecond)
+					syscall.Kill(pid, syscall.SIGINT)
+					time.Sleep(10 * time.Millisecond)
+					syscall.Kill(pid, syscall.SIGINT)
+					time.Sleep(10 * time.Millisecond)
+					syscall.Kill(pid, syscall.SIGINT)
+					time.Sleep(10 * time.Millisecond)
+					syscall.Kill(pid, syscall.SIGINT)
 					log.Println("SIGINT send to julia due to timeout.")
 				}
 				msg.Nak()

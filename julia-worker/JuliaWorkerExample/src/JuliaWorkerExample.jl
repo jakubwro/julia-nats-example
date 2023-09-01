@@ -7,22 +7,32 @@ export mainloop, do_stuff
 
 function do_stuff(data)
     random = rand()
-    processing_time = 7 * random
+    # processing_time = 7 * random
     # if random > 0.99
     #     @warn "Simulating segfault."
     #     exit(1)
     # end
-    @info "Procesisng time is $processing_time s."
-    sleep(processing_time)
+    @info "Random is $random s."
+    result = 0.0
+    x = if random < 0.5
+        @info "Large matrix."
+        rand(1.0:10.0, 7000, 7000)
+    else
+        @info "Small matrix."
+        rand(1.0:10.0, 65, 65)
+    end
+    @time y = x*x
+    result = sum(y)
+    # sleep(processing_time)
     # if random < 0.01
     #     @warn "Simulating segfault."
     #     exit(1)
     # end
-    "Processing finished after $processing_time s."
+    "Processing finished, $random s, result $result."
 end
 
 function mainloop(f)
-    Base.exit_on_sigint(false)
+    # Base.exit_on_sigint(false)
     mkdir("/tmp/liveness")
     @info "Reading requests."
 
@@ -48,7 +58,7 @@ function mainloop(f)
                 result = base64encode(result)
                 @show result
                 @show isopen(s)
-                !isopen(s) && error("Connection closed, mesage processed.")
+                !isopen(s) && error("Connection closed after message processed.")
                 write(s, "$result\n")
                 flush(s)
             end

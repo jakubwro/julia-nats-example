@@ -3,4 +3,5 @@ Experiments with NATS JetStream and Julia workers.
 
 ## Architecture diagram
 
-![architecture-overview](https://github.com/jakubwro/julia-nats-example/assets/6503171/81c0f46d-139c-412a-b270-50da741275e8)
+![architecture-overview-2](https://github.com/jakubwro/julia-nats-example/assets/6503171/4a8f8a38-9ddd-4afc-83dd-aa8248cdeec3)
+

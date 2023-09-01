@@ -22,7 +22,7 @@ const (
 )
 
 const (
-	WORKER_TIMEOUT = 5 * time.Second
+	WORKER_TIMEOUT = 5 * time.Second // After timeout SIGINT is send to worker. If process failes to recover liveness probe will SIGTERM it.
 )
 
 func findJuliaProcessPid() (pid int) {

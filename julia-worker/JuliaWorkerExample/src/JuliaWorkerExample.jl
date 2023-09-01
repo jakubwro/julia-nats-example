@@ -7,16 +7,18 @@ export mainloop, do_stuff
 
 function do_stuff(data)
     random = rand()
+    processing_time = 7 * random
     # if random > 0.99
     #     @warn "Simulating segfault."
     #     exit(1)
     # end
-    sleep(7 * random)
+    @info "Procesisng time is $processing_time s."
+    sleep(processing_time)
     # if random < 0.01
     #     @warn "Simulating segfault."
     #     exit(1)
     # end
-    "Processing finished after $(7 * random) s."
+    "Processing finished after $processing_time s."
 end
 
 function mainloop(f)

@@ -1,7 +1,7 @@
 
 LIVENESS_PROBE_TIMEOUT_SECONDS="${LIVENESS_PROBE_TIMEOUT_SECONDS:-10}"
 
-time_ago=$(date -d 'now - $LIVENESS_PROBE_TIMEOUT_SECONDS seconds' +%s)
+time_ago=$(date -d "now - $LIVENESS_PROBE_TIMEOUT_SECONDS seconds" +%s)
 working_since=$(date -r "/tmp/liveness/working" +%s)
 
 if [ $? -eq 0 ]; then

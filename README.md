@@ -18,7 +18,7 @@ Goals:
 
 ```
 brew install kind
-kind create --config kind-config.yaml
+kind create cluster --config kind-config.yaml
 docker pull julia:1.9.3
 docker pull alpine:3.17
 kind load docker-image julia:1.9.3

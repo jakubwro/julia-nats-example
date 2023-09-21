@@ -282,6 +282,14 @@ export class MyChart extends Chart {
                     spec: {
                         shareProcessNamespace: true,
                         // TODO: handle SIGINT to julia process instad of default SIGTERM, probably with custom operator
+                        // It can also catch SIGTERM from init and notify julia process with SIGINT
+                        // https://github.com/krallin/tini
+
+                        // Or add STOPSIGNAL to image changing SIGTERM to SIGINT
+                        // https://github.com/cri-o/cri-o/issues/306
+                        // https://github.com/aws/containers-roadmap/issues/359
+                        // https://github.com/kubernetes/kubernetes/issues/30051
+
                         // https://docs.julialang.org/en/v1/manual/faq/#catch-ctrl-c
                         // https://docs.julialang.org/en/v1/base/base/#Base.atexit
                         // https://docs.julialang.org/en/v1/base/base/#Core.InterruptException

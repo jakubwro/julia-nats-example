@@ -1,0 +1,14 @@
+
+services:
+  julia:
+    # image: julia:1.9.3
+    # stop_signal: SIGINT
+    build: .
+    entrypoint: ["julia", "-e", '@info "start"; try sleep(100) catch end; @info "stopping"']
+
+  dozzle:
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 8080:8080
